@@ -19,31 +19,31 @@ const ObjectId = Schema.ObjectId;
  * user_id: 用户id
  * title: 任务标题
  * detail: 任务详情
- * type: 任务类型 [待办事项/明日计划/当前任务]
+ * type: 任务类型 [0: 待办事项/1: 明日计划/2: 当前任务]
  * progress: 任务进度
  * expect_cost: 预计耗时（h）
  * real_cost: 实际耗时（h）
  * daily_cost: 每日耗时（h）
- * priority: 任务优先级
+ * priority: 任务优先级 默认5 越小优先级越高
  * status: 任务状态 [0：进行中/1：完成/2：删除]
- * hierarchies: 任务层级结构（根任务）
+ * hierarchies: 任务层级结构（根任务）[0: root, 1: node]
  * start_time: 任务开始时间
  * end_time: 任务结束时间
  */
 const taskSchema = new Schema({
     _id: {type: ObjectId},
-    parent_id: {type: ObjectId, ref: 'task'},
+    parent_id: {type: String, default: ''},
     user_id: {type: ObjectId, ref: 'user'},
     title: {type: String},
-    detail: {type: String},
-    type: {type: String},
-    progress: {type: String},
+    detail: {type: String, default: ''},
+    type: {type: Number, default: 0},
+    progress: {type: Number, default: 0},
     expect_cost: {type: String},
     real_cost: {type: String},
     daily_cost: {type: Array},
-    priority: {type: Number},
-    status: {type: String},
-    hierarchies: {type: String},
+    priority: {type: Number, default: 5},
+    status: {type: Number, default: 0},
+    hierarchies: {type: Number, default: 0},
     start_time: {type: Date},
     end_time: {type: Date},
     create_time: {type: Date, default: Date.now},
