@@ -24,14 +24,15 @@ const ObjectId = Schema.ObjectId;
  * expect_cost: 预计耗时（h）
  * real_cost: 实际耗时（h）
  * daily_cost: 每日耗时（h）
- * priority: 任务优先级 默认5 越小优先级越高
+ * priority: 任务优先级 默认5 越小优先级越高 最高为1
  * status: 任务状态 [0：进行中/1：完成/2：删除]
- * hierarchies: 任务层级结构（根任务）[0: root, 1: node]
+ * hierarchies: 任务层级结构（根任务）[节点层级，默认1级，依次增加]
  * start_time: 任务开始时间
  * end_time: 任务结束时间
  */
 const taskSchema = new Schema({
     _id: {type: ObjectId},
+    // children_id: [{type: ObjectId, ref: 'tasks' , default: ''}],
     parent_id: {type: String, default: ''},
     user_id: {type: ObjectId, ref: 'user'},
     title: {type: String},
@@ -43,7 +44,7 @@ const taskSchema = new Schema({
     daily_cost: {type: Array},
     priority: {type: Number, default: 5},
     status: {type: Number, default: 0},
-    hierarchies: {type: Number, default: 0},
+    hierarchies: {type: Number, default: 1},
     start_time: {type: Date},
     end_time: {type: Date},
     create_time: {type: Date, default: Date.now},

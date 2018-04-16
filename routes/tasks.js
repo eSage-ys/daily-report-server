@@ -15,12 +15,12 @@ const defaultOptions = {
   type: 0,
   progress: 0,
   status: 0,
-  hierarchies: 0,
+  hierarchies: 1,
   detail: '',
   parent_id: '',
   real_cost: '',
   daily_cost: [],
-  projection: {},
+  projection: {creator: 0, modifier: 0, modify_time: 0, __v: 0},
   code2: {code: 2, msg: 'params error'},
   code4: {code: 4, msg: 'data error'}
 };
@@ -43,7 +43,7 @@ const _save = function (entity) {
 };
 /**
  * _remove
- * package User.remove <return Query> to Promise
+ * package Model.remove <return Query> to Promise
  *
  * @param conditions
  */
@@ -59,34 +59,15 @@ const _remove = function (conditions) {
   })
 };
 /**
- * _update
- * package User.update <return Query> to Promise
- *
- * @param conditions
- * @param doc
- * @param option
- */
-const _update = function (conditions, doc, option = null) {
-  return new Promise((resolve, reject) => {
-    Model.update(conditions, doc, option, (err, raw) => {
-      if (err) {
-        reject(err);
-      } else {
-        resolve(raw);
-      }
-    })
-  })
-};
-/**
  * _findByIdAndRemove
- * package User.findByIdAndRemove <return Query> to Promise
+ * package Model.findByIdAndRemove <return Query> to Promise
  *
  * @param id
- * @param option
+ * @param options
  */
-const _findByIdAndRemove = function (id, option = null) {
+const _findByIdAndRemove = function (id, options = null) {
   return new Promise((resolve, reject) => {
-    Model.findByIdAndRemove(id, option, (err) => {
+    Model.findByIdAndRemove(id, options, (err) => {
       if (err) {
         reject(err);
       } else {
@@ -96,20 +77,58 @@ const _findByIdAndRemove = function (id, option = null) {
   })
 };
 /**
+ * _update
+ * package Model.update <return Query> to Promise
+ *
+ * @param conditions
+ * @param doc
+ * @param options
+ */
+const _update = function (conditions, doc, options = null) {
+  return new Promise((resolve, reject) => {
+    Model.update(conditions, doc, options, (err, raw) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(raw);
+      }
+    })
+  })
+};
+/**
  * _find
- * package User.find <return Query> to Promise
+ * package Model.find <return Query> to Promise
  *
  * @param conditions
  * @param projection
- * @param option
+ * @param options
  */
-const _find = function (conditions = {}, projection = defaultOptions.projection, option = null) {
+const _find = function (conditions = {}, projection = defaultOptions.projection, options = null) {
   return new Promise(function (resolve, reject) {
-    Model.find(conditions, projection, option, function (err, docs) {
+    Model.find(conditions, projection, options, function (err, docs) {
       if (err) {
         reject(err);
       } else {
         resolve(docs);
+      }
+    })
+  })
+};
+/**
+ * _findById
+ * package Model.findById <return Query> to Promise
+ *
+ * @param id
+ * @param projection
+ * @param options
+ */
+const _findById = function (id, projection = defaultOptions.projection, options = null) {
+  return new Promise((resolve, reject) => {
+    Model.findById(id, projection, options, (err, doc) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(doc);
       }
     })
   })
@@ -119,41 +138,27 @@ const addTask = function (req) {
   return new Promise(resolve => {
     let ret = {};
     let task = {};
-    let user_id = req.param('userId');
-    let parent_id = req.param('parentId');
-    let title = req.param('title');
-    let detail = req.param('detail');
-    let type = req.param('type');
-    let progress = req.param('progress');
-    let expect_cost = req.param('expectCost');
-    let real_cost = req.param('realCost');
-    let daily_cost = req.param('dailyCost');
-    let priority = req.param('priority');
-    let status = req.param('status');
-    let hierarchies = req.param('hierarchies');
-    let start_time = req.param('startTime');
-    let end_time = req.param('endTime');
-    if (!user_id || !title || !expect_cost) {
+    task.user_id = req.param('userId') || '';
+    task.title = req.param('title') || '';
+    task.expect_cost = req.param('expectCost') || '';
+    if (!task.user_id || !task.title || !task.expect_cost) {
       resolve(defaultOptions.code2);
     } else {
       task._id = new mongoose.Types.ObjectId;
-      task.user_id = user_id;
-      task.title = title;
-      task.expect_cost = expect_cost;
-      task.parent_id = parent_id ? parent_id : defaultOptions.parent_id;
-      task.detail = detail ? detail : defaultOptions.detail;
-      task.type = type ? type : defaultOptions.type;
-      task.progress = progress ? progress : defaultOptions.progress;
-      task.real_cost = real_cost ? real_cost : defaultOptions.real_cost;
-      task.daily_cost = daily_cost ? daily_cost : defaultOptions.daily_cost;
-      task.priority = priority ? priority : defaultOptions.priority;
-      task.status = status ? status : defaultOptions.status;
-      task.hierarchies = hierarchies ? hierarchies : defaultOptions.hierarchies;
-      if (start_time) {
-        task.start_time = start_time;
+      task.parent_id = req.param('parentId') || defaultOptions.parent_id;
+      task.detail = req.param('detail') || defaultOptions.detail;
+      task.type = req.param('type') || defaultOptions.type;
+      task.progress = req.param('progress') || defaultOptions.progress;
+      task.real_cost = req.param('realCost') || defaultOptions.real_cost;
+      task.daily_cost = req.param('dailyCost') || defaultOptions.daily_cost;
+      task.priority = req.param('priority') || defaultOptions.priority;
+      task.status = req.param('status') || defaultOptions.status;
+      task.hierarchies = req.param('hierarchies') || defaultOptions.hierarchies;
+      if (req.param('startTime')) {
+        task.start_time = req.param('startTime');
       }
-      if (end_time) {
-        task.end_time = end_time;
+      if (req.param('endTime')) {
+        task.end_time = req.param('endTime');
       }
       _save(task).then(doc => {
         console.log(doc);
@@ -164,6 +169,137 @@ const addTask = function (req) {
         console.error(err);
         ret.code = 1;
         ret.msg = 'add task failed';
+        resolve(ret);
+      })
+    }
+  })
+};
+const deleteById = function (req) {
+  return new Promise(resolve => {
+    let ret = {};
+    let id = req.param('id');
+    if (!id) {
+      resolve(defaultOptions.code2);
+    } else {
+      _findByIdAndRemove(id).then(() => {
+        ret.code = 0;
+        ret.msg = 'success';
+        resolve(ret);
+      }).catch(err => {
+        console.error(err);
+        ret.code = 1;
+        ret.msg = 'delete user failed';
+        resolve(ret);
+      })
+    }
+  })
+};
+const deleteTasks = function (req) {
+  return new Promise(resolve => {
+    let ret = {};
+    let idList = req.param('ids');
+    if (!Array.isArray(idList)) {
+      resolve(defaultOptions.code2);
+    } else {
+      _remove({_id: {$in: idList}}).then(status => {
+        if (status && status.n > 0) {
+          ret.code = 0;
+          ret.msg = 'success';
+          ret.count = status.n;
+          resolve(ret);
+        } else {
+          console.error('no task has been deleted');
+          ret.code = 1;
+          ret.msg = 'delete tasks failed';
+          resolve(ret);
+        }
+      }).catch(err => {
+        console.error(err);
+        ret.code = 1;
+        ret.msg = 'delete tasks failed';
+        resolve(ret);
+      })
+    }
+  })
+};
+const updateTask = function (req) {
+  return new Promise(resolve => {
+    let ret = {};
+    let newTask = {};
+    let conditions = {};
+    let id = req.param('id');
+    let user_id = req.param('userId');
+    let title = req.param('title');
+    let detail = req.param('detail');
+    let progress = req.param('progress');
+    let daily_cost = req.param('dailyCost');
+    let priority = req.param('priority');
+    let status = req.param('status');
+    if (id) {
+      conditions._id = id;
+    }
+    if (user_id) {
+      conditions.user_id = user_id;
+    }
+    if (title) {
+      newTask.title = title;
+    }
+    if (detail) {
+      newTask.detail = detail;
+    }
+    if (progress) {
+      newTask.progress = progress;
+    }
+    if (priority) {
+      newTask.priority = priority;
+    }
+    if (status) {
+      newTask.status = status;
+    }
+    // todo 先查询
+    if (daily_cost) {
+
+    }
+    // todo real_cost start_time end_time
+  })
+};
+const updateTreeStatus = function (req) {
+  return new Promise(resolve => {
+    let ret = {};
+    let newTask = {};
+    let id = req.param('id');
+    let parent_id = req.param('parentId');
+    let hierarchies = req.param('hierarchies');
+    let type = req.param('type');
+    if (!id) {
+      resolve(defaultOptions.code2);
+    } else {
+      if (parent_id) {
+        newTask.parent_id = parent_id;
+      }
+      if (hierarchies) {
+        newTask.hierarchies = hierarchies;
+      }
+      if (type) {
+        newTask.type = type;
+      }
+      // todo 先查询task信息，判断是否开始
+      // 如果type = 2 (当前任务)
+      _update({_id: id}, {$set: newTask}).then(raw => {
+        if (raw.nModified > 0) {
+          ret.code = 0;
+          ret.msg = 'success';
+          resolve(ret);
+        } else {
+          console.error('no task has updated');
+          ret.code = 1;
+          ret.msg = 'update task failed';
+          resolve(ret);
+        }
+       }).catch(err => {
+        console.error(err);
+        ret.code = 1;
+        ret.msg = 'update task failed';
         resolve(ret);
       })
     }
@@ -185,6 +321,75 @@ const findAll = function () {
     })
   })
 };
+const findById = function (req) {
+  return new Promise(resolve => {
+    let ret = {};
+    let id = req.param('id');
+    if (!id) {
+      resolve(defaultOptions.code2);
+    } else {
+      _findById(id).then(doc => {
+        ret.code = 0;
+        ret.msg = 'success';
+        ret.data = doc;
+        resolve(doc);
+      }).catch(err => {
+        console.error(err);
+        ret.code = 1;
+        ret.msg = 'get task failed';
+        resolve(ret);
+      })
+    }
+  })
+};
+const findByUserId = function (req) {
+  return new Promise(resolve => {
+    let ret = {};
+    let user_id = req.param('userId');
+    if (!user_id) {
+      resolve(defaultOptions.code2);
+    } else {
+      _find({user_id: user_id}).then(docs => {
+        try {
+          // 这里使用JSON格式化数据并解析，是为了过滤掉docs对象中的其他属性和方法，方便后面添加children属性
+          docs = JSON.parse(JSON.stringify(docs));
+        } catch (e) {
+          docs = [];
+        }
+        let taskTree = [];
+        let children = {};
+        docs.sort((a, b) => {
+          return (b.hierarchies === a.hierarchies && b.create_time < a.create_time ) || (b.hierarchies - a.hierarchies);
+        });
+        docs.forEach( doc => {
+          doc.childNodes  = [];
+          if (children.hasOwnProperty(doc._id)) {
+            doc.childNodes = children[doc._id];
+          }
+          if (!doc.parent_id && doc.hierarchies === 1) {
+            taskTree.unshift(doc);
+          } else if (children.hasOwnProperty(doc.parent_id)) {
+            children[doc.parent_id].unshift(doc);
+          } else if (doc.parent_id) {
+            children[doc.parent_id] = [doc];
+          } else {
+            console.error('数据异常');
+            console.error('_id: ' + doc._id);
+          }
+        });
+        ret.code = 0;
+        ret.msg = 'success';
+        ret.data  = taskTree;
+        resolve(ret)
+      }).catch(err => {
+        console.error(err);
+        ret.code = 0;
+        ret.msg = 'get tasks failed';
+        resolve(ret);
+      })
+    }
+  })
+};
 
 /* GET task page. */
 router.get('/', (req, res) => {
@@ -201,12 +406,69 @@ router.get('/add', (req, res) => {
     }
   })
 });
-// /add doc
 // /remove  by id
-// /update  by id ***
+router.get('/delete', (req, res) => {
+  deleteById(req).then(ret => {
+    try {
+      res.send(JSON.stringify(ret));
+    } catch (e) {
+      res.send(JSON.stringify(defaultOptions.code4));
+    }
+  })
+});
+// post
+router.post('/deleteBatch', (req, res) => {
+  deleteTasks(req).then(ret => {
+    try {
+      res.send(JSON.stringify(ret));
+    } catch (e) {
+      res.send(JSON.stringify(defaultOptions.code4));
+    }
+  })
+});
+// update  by id ***
+router.get('/update', (req, res) => {
+  updateTask(req).then(ret => {
+    try {
+      res.send(JSON.stringify(ret));
+    } catch (e) {
+      res.send(JSON.stringify(defaultOptions.code4));
+    }
+  })
+});
+// update parent
+router.get('/updateTreeStatus', (req, res) => {
+  updateTreeStatus.then(ret => {
+    try {
+      res.send(JSON.stringify(ret));
+    } catch (e) {
+      res.send(JSON.stringify(defaultOptions.code4));
+    }
+  })
+});
 // /all
 router.get('/all', (req, res) => {
   findAll().then(ret => {
+    try {
+      res.send(JSON.stringify(ret));
+    } catch (e) {
+      res.send(JSON.stringify(defaultOptions.code4));
+    }
+  })
+});
+
+router.get('/findById', (req, res) => {
+  findById(req).then(ret => {
+    try {
+      res.send(JSON.stringify(ret));
+    } catch (e) {
+      res.send(JSON.stringify(defaultOptions.code4));
+    }
+  })
+});
+
+router.get('/allByUser', (req, res) => {
+  findByUserId(req).then(ret => {
     try {
       res.send(JSON.stringify(ret));
     } catch (e) {

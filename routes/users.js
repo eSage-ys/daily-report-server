@@ -11,7 +11,7 @@ const mongoose = require('mongoose');
 const Model = require('../common/mongodb').User;
 
 const defaultOptions = {
-  projection: {account: 1, _id: 1, role: 1, modify_time: 1, password: 1},
+  projection: {creator: 0, modifier: 0, modify_time: 0, password: 0, __v: 0},
   // 0: admin 1: user
   roles: [0, 1],
   role_admin: 0,
@@ -41,7 +41,7 @@ const _save = function (entity) {
 };
 /**
  * _remove
- * package User.remove <return Query> to Promise
+ * package Model.remove <return Query> to Promise
  *
  * @param conditions
  */
@@ -58,15 +58,15 @@ const _remove = function (conditions) {
 };
 /**
  * _update
- * package User.update <return Query> to Promise
+ * package Model.update <return Query> to Promise
  *
  * @param conditions
  * @param doc
- * @param option
+ * @param options
  */
-const _update = function (conditions, doc, option = null) {
+const _update = function (conditions, doc, options = null) {
   return new Promise((resolve, reject) => {
-    Model.update(conditions, doc, option, (err, raw) => {
+    Model.update(conditions, doc, options, (err, raw) => {
       if (err) {
         reject(err);
       } else {
@@ -77,14 +77,14 @@ const _update = function (conditions, doc, option = null) {
 };
 /**
  * _findByIdAndRemove
- * package User.findByIdAndRemove <return Query> to Promise
+ * package Model.findByIdAndRemove <return Query> to Promise
  *
  * @param id
- * @param option
+ * @param options
  */
-const _findByIdAndRemove = function (id, option = null) {
+const _findByIdAndRemove = function (id, options = null) {
   return new Promise((resolve, reject) => {
-    Model.findByIdAndRemove(id, option, (err) => {
+    Model.findByIdAndRemove(id, options, (err) => {
       if (err) {
         reject(err);
       } else {
@@ -95,15 +95,15 @@ const _findByIdAndRemove = function (id, option = null) {
 };
 /**
  * _find
- * package User.find <return Query> to Promise
+ * package Model.find <return Query> to Promise
  *
  * @param conditions
  * @param projection
- * @param option
+ * @param options
  */
-const _find = function (conditions = {}, projection = defaultOptions.projection, option = null) {
+const _find = function (conditions = {}, projection = defaultOptions.projection, options = null) {
   return new Promise(function (resolve, reject) {
-    Model.find(conditions, projection, option, function (err, docs) {
+    Model.find(conditions, projection, options, function (err, docs) {
       if (err) {
         reject(err);
       } else {
@@ -279,14 +279,14 @@ const deleteUsers = function (req) {
     if (!Array.isArray(idList)) {
       resolve(defaultOptions.code2);
     } else {
-      _remove({_id: {$in: idList}}).then((status) => {
+      _remove({_id: {$in: idList}}).then(status => {
         if (status && status.n > 0) {
           ret.code = 0;
           ret.msg = 'success';
           ret.count = status.n;
           resolve(ret);
         } else {
-          console.error('no user has deleted');
+          console.error('no user has been deleted');
           ret.code = 1;
           ret.msg = 'delete users failed';
           resolve(ret);
@@ -309,16 +309,16 @@ const deleteUsers = function (req) {
 const updateUser = function (req) {
   return new Promise(resolve => {
     let ret = {};
-    let id = req.param('id');
-    let account = req.param('account');
-    let password = req.param('password');
-    if (!password) {
+    let id = req.param('id') || '';
+    let account = req.param('account') || '';
+    let password = req.param('password') || '';
+    if (!password || (!id && !account)) {
       resolve(defaultOptions.code2);
     } else {
       let conditions = {$or: [{_id: id}, {account: account}]};
       let doc = {$set: {password: password, modify_time: Date.now()}};
       _update(conditions, doc).then(raw => {
-        console.log(raw);
+        // console.log(raw);
         if (raw.nModified > 0) {
           ret.code = 0;
           ret.msg = 'success';
@@ -341,7 +341,7 @@ const updateUser = function (req) {
 
 /* GET users listing. */
 
-router.get('/add', function(req, res) {
+router.get('/add', (req, res) => {
   addUser(req, defaultOptions.role_user).then(ret => {
     try {
       res.send(JSON.stringify(ret));
@@ -351,7 +351,7 @@ router.get('/add', function(req, res) {
   });
 });
 
-router.get('/addAdmin', function(req, res) {
+router.get('/addAdmin', (req, res) => {
   addUser(req, defaultOptions.role_admin).then(ret => {
     try {
       res.send(JSON.stringify(ret));
@@ -361,7 +361,7 @@ router.get('/addAdmin', function(req, res) {
   });
 });
 
-router.get('/delete', function (req, res) {
+router.get('/delete', (req, res) => {
   deleteUserById(req).then(ret => {
     try {
       res.send(JSON.stringify(ret));
@@ -371,7 +371,8 @@ router.get('/delete', function (req, res) {
   })
 });
 
-router.post('/deleteBatch', function (req, res) {
+// post
+router.post('/deleteBatch', (req, res) => {
   deleteUsers(req).then(ret => {
     try {
       res.send(JSON.stringify(ret));
@@ -381,7 +382,7 @@ router.post('/deleteBatch', function (req, res) {
   })
 });
 
-router.get('/update', function (req, res) {
+router.get('/update', (req, res) => {
   updateUser(req).then(ret => {
     try {
       res.send(JSON.stringify(ret));
@@ -391,7 +392,7 @@ router.get('/update', function (req, res) {
   })
 });
 
-router.get('/check', function(req, res) {
+router.get('/check', (req, res) => {
   checkAccountAndPwd(req).then(ret => {
     try {
       res.send(JSON.stringify(ret));
@@ -401,7 +402,7 @@ router.get('/check', function(req, res) {
   });
 });
 
-router.get('/all', function(req, res) {
+router.get('/all', (req, res) => {
   findAllUser().then(ret => {
     try {
       res.send(JSON.stringify(ret));
@@ -411,7 +412,7 @@ router.get('/all', function(req, res) {
   })
 });
 
-router.get('/allByRole', function(req, res) {
+router.get('/allByRole', (req, res) => {
   findAllByRole(req).then(ret => {
     try {
       res.send(JSON.stringify(ret));
