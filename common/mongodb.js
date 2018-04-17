@@ -41,7 +41,7 @@ const taskSchema = new Schema({
     progress: {type: Number, default: 0},
     expect_cost: {type: String},
     real_cost: {type: String},
-    daily_cost: {type: Array},
+    daily_cost: {type: Object},
     priority: {type: Number, default: 5},
     status: {type: Number, default: 0},
     hierarchies: {type: Number, default: 1},

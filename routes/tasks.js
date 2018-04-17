@@ -9,6 +9,7 @@ const express = require('express');
 const router = express.Router();
 const mongoose = require('mongoose');
 const Model = require('../common/mongodb').Task;
+const utils = require('../common/utils');
 
 const defaultOptions = {
   priority: 5,
@@ -19,7 +20,8 @@ const defaultOptions = {
   detail: '',
   parent_id: '',
   real_cost: '',
-  daily_cost: [],
+  daily_cost: {},
+  date_format: 'yyyy-MM-hh',
   projection: {creator: 0, modifier: 0, modify_time: 0, __v: 0},
   code2: {code: 2, msg: 'params error'},
   code4: {code: 4, msg: 'data error'}
@@ -226,41 +228,80 @@ const updateTask = function (req) {
   return new Promise(resolve => {
     let ret = {};
     let newTask = {};
-    let conditions = {};
-    let id = req.param('id');
-    let user_id = req.param('userId');
-    let title = req.param('title');
-    let detail = req.param('detail');
-    let progress = req.param('progress');
-    let daily_cost = req.param('dailyCost');
-    let priority = req.param('priority');
-    let status = req.param('status');
-    if (id) {
-      conditions._id = id;
+    let id = req.param('id') || '';
+    if (!id) {
+      resolve(defaultOptions.code2);
+    } else {
+      _findById(id).then(oldTask => {
+        let title = req.param('title');
+        let detail = req.param('detail');
+        let progress = req.param('progress');
+        let priority = req.param('priority');
+        let status = req.param('status');
+        // number
+        let today_cost = req.param('dailyCost');
+        let today = req.param('today');
+        let dailyCosts = oldTask.daily_cost;
+        let now = today || new Date();
+        if (title) {
+          newTask.title = title;
+        }
+        if (detail) {
+          newTask.detail = detail;
+        }
+        if (priority) {
+          newTask.priority = priority;
+        }
+        if (status) {
+          newTask.status = status;
+        }
+        if (today_cost) {
+          let todayFmt = utils.dateFormat(new Date(now), defaultOptions.date_format);
+          if (!dailyCosts || typeof dailyCosts !== 'object') {
+            dailyCosts = {};
+          }
+          dailyCosts[todayFmt] = today_cost;
+          newTask.daily_cost = dailyCosts;
+        }
+        if (progress) {
+          newTask.progress = progress;
+          // todo 判断是否是字符串
+          if (progress == 100) {
+            newTask.end_time = now;
+            // real_cost(include today_cost)
+            if (dailyCosts && typeof dailyCosts === 'object') {
+              for (let daily in dailyCosts) {
+                if (dailyCosts.hasOwnProperty(cost)) {
+                  newTask.real_cost += dailyCosts[daily];
+                }
+              }
+            }
+          }
+        }
+        _update({_id: id}, {$set: newTask}).then(status => {
+          if (status.nModified > 0) {
+            ret.code = 0;
+            ret.msg = 'success';
+            resolve(ret);
+          } else {
+            console.error('no task has updated');
+            ret.code = 1;
+            ret.msg = 'update failed';
+            resolve(ret);
+          }
+        }).catch(err => {
+          console.error(err);
+          ret.code = 1;
+          ret.msg = 'update failed';
+          resolve(ret);
+        })
+      }).catch(err => {
+        console.error(err);
+        ret.code = 1;
+        ret.msg = 'not find this task, update failed';
+        resolve(ret);
+      })
     }
-    if (user_id) {
-      conditions.user_id = user_id;
-    }
-    if (title) {
-      newTask.title = title;
-    }
-    if (detail) {
-      newTask.detail = detail;
-    }
-    if (progress) {
-      newTask.progress = progress;
-    }
-    if (priority) {
-      newTask.priority = priority;
-    }
-    if (status) {
-      newTask.status = status;
-    }
-    // todo 先查询
-    if (daily_cost) {
-
-    }
-    // todo real_cost start_time end_time
   })
 };
 const updateTreeStatus = function (req) {
@@ -283,7 +324,7 @@ const updateTreeStatus = function (req) {
       if (type) {
         newTask.type = type;
       }
-      // todo 先查询task信息，判断是否开始
+      // todo: 先查询task信息，判断是否开始
       // 如果type = 2 (当前任务)
       _update({_id: id}, {$set: newTask}).then(raw => {
         if (raw.nModified > 0) {
@@ -396,7 +437,7 @@ router.get('/', (req, res) => {
 
 });
 
-// todo post
+// todo: post
 router.get('/add', (req, res) => {
   addTask(req).then(ret => {
     try {
