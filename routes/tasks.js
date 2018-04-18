@@ -315,30 +315,43 @@ const updateTreeStatus = function (req) {
     if (!id) {
       resolve(defaultOptions.code2);
     } else {
-      if (parent_id) {
-        newTask.parent_id = parent_id;
-      }
-      if (hierarchies) {
-        newTask.hierarchies = hierarchies;
-      }
-      if (type) {
-        newTask.type = type;
-      }
-      // todo: 先查询task信息，判断是否开始
-      // 如果type = 2 (当前任务)
-      _update({_id: id}, {$set: newTask}).then(raw => {
-        if (raw.nModified > 0) {
-          ret.code = 0;
-          ret.msg = 'success';
-          resolve(ret);
-        } else {
-          console.error('no task has updated');
+      _findById(id).then(oldTask => {
+        let oldType = oldTask.type;
+        if (parent_id) {
+          newTask.parent_id = parent_id;
+        }
+        if (hierarchies) {
+          newTask.hierarchies = hierarchies;
+        }
+        if (type) {
+          newTask.type = type;
+          if (type === '2' && oldType !== 2) {
+            newTask.start_time = new Date();
+          } else if (type !== '2' && oldType === 2) {
+            // 不应该出现这种情况
+          }
+        }
+        // todo: 先查询task信息，判断是否开始
+        // 如果type = 2 (当前任务)
+        _update({_id: id}, {$set: newTask}).then(raw => {
+          if (raw.nModified > 0) {
+            ret.code = 0;
+            ret.msg = 'success';
+            resolve(ret);
+          } else {
+            console.error('no task has updated');
+            ret.code = 1;
+            ret.msg = 'update task failed';
+            resolve(ret);
+          }
+         }).catch(errUpdate => {
+          console.error(errUpdate);
           ret.code = 1;
           ret.msg = 'update task failed';
           resolve(ret);
-        }
-       }).catch(err => {
-        console.error(err);
+        })
+      }).catch(errFind => {
+        console.error(errFind);
         ret.code = 1;
         ret.msg = 'update task failed';
         resolve(ret);
