@@ -19,7 +19,7 @@ const defaultOptions = {
   hierarchies: 1,
   detail: '',
   parent_id: '',
-  real_cost: '',
+  real_cost: 0,
   daily_cost: {},
   date_format: 'yyyy-MM-hh',
   projection: {creator: 0, modifier: 0, modify_time: 0, __v: 0},
@@ -176,6 +176,7 @@ const addTask = function (req) {
     }
   })
 };
+// todo 假删除
 const deleteById = function (req) {
   return new Promise(resolve => {
     let ret = {};
@@ -242,6 +243,7 @@ const updateTask = function (req) {
         let today_cost = req.param('dailyCost');
         let today = req.param('today');
         let dailyCosts = oldTask.daily_cost;
+        let oldProcess = oldTask.progress;
         let now = today || new Date();
         if (title) {
           newTask.title = title;
@@ -265,17 +267,21 @@ const updateTask = function (req) {
         }
         if (progress) {
           newTask.progress = progress;
-          // todo 判断是否是字符串
-          if (progress == 100) {
+          // url传过来的参数都是字符串
+          if (progress === '100' && oldProcess < 100) {
             newTask.end_time = now;
             // real_cost(include today_cost)
             if (dailyCosts && typeof dailyCosts === 'object') {
               for (let daily in dailyCosts) {
-                if (dailyCosts.hasOwnProperty(cost)) {
+                if (dailyCosts.hasOwnProperty(daily)) {
                   newTask.real_cost += dailyCosts[daily];
                 }
               }
             }
+          } else if (progress !== '100' && oldProcess === 100) {  // 修改完成状态
+            newTask.real_cost = 0;
+            // todo 能否置为空
+            newTask.end_time = '';
           }
         }
         _update({_id: id}, {$set: newTask}).then(status => {
