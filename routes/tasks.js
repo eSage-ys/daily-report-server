@@ -14,7 +14,7 @@ const utils = require('../common/utils');
 const defaultOptions = {
   priority: 5,
   type: 0,
-  progress: 0,
+  // progress: 0,
   status: 0,
   hierarchies: 1,
   detail: '',
@@ -150,7 +150,7 @@ const addTask = function (req) {
       task.parent_id = req.param('parentId') || defaultOptions.parent_id;
       task.detail = req.param('detail') || defaultOptions.detail;
       task.type = req.param('type') || defaultOptions.type;
-      task.progress = req.param('progress') || defaultOptions.progress;
+      // task.progress = req.param('progress') || defaultOptions.progress;
       task.real_cost = req.param('realCost') || defaultOptions.real_cost;
       task.daily_cost = req.param('dailyCost') || defaultOptions.daily_cost;
       task.priority = req.param('priority') || defaultOptions.priority;
@@ -236,14 +236,14 @@ const updateTask = function (req) {
       _findById(id).then(oldTask => {
         let title = req.param('title');
         let detail = req.param('detail');
-        let progress = req.param('progress');
+        // let progress = req.param('progress');
         let priority = req.param('priority');
         let status = req.param('status');
         // number
         let today_cost = req.param('dailyCost');
         let today = req.param('today');
         let dailyCosts = oldTask.daily_cost;
-        let oldProcess = oldTask.progress;
+        // let oldProcess = oldTask.progress;
         let now = today || new Date();
         if (title) {
           newTask.title = title;
@@ -256,34 +256,26 @@ const updateTask = function (req) {
         }
         if (status) {
           newTask.status = status;
+          if (status === 2) {
+            newTask.end_time = now;
+          }
         }
         if (today_cost) {
           let todayFmt = utils.dateFormat(new Date(now), defaultOptions.date_format);
           if (!dailyCosts || typeof dailyCosts !== 'object') {
             dailyCosts = {};
+          } else {
+            newTask.real_cost = today_cost;
+            for (let daily in dailyCosts) {
+              if (dailyCosts.hasOwnProperty(daily)) {
+                newTask.real_cost += dailyCosts[daily];
+              }
+            }
           }
           dailyCosts[todayFmt] = today_cost;
           newTask.daily_cost = dailyCosts;
         }
-        if (progress) {
-          newTask.progress = progress;
-          // url传过来的参数都是字符串
-          if (progress === '100' && oldProcess < 100) {
-            newTask.end_time = now;
-            // real_cost(include today_cost)
-            if (dailyCosts && typeof dailyCosts === 'object') {
-              for (let daily in dailyCosts) {
-                if (dailyCosts.hasOwnProperty(daily)) {
-                  newTask.real_cost += dailyCosts[daily];
-                }
-              }
-            }
-          } else if (progress !== '100' && oldProcess === 100) {  // 修改完成状态
-            newTask.real_cost = 0;
-            // todo 能否置为空
-            newTask.end_time = '';
-          }
-        }
+        newTask.modify_time = new Date();
         _update({_id: id}, {$set: newTask}).then(status => {
           if (status.nModified > 0) {
             ret.code = 0;
@@ -335,10 +327,9 @@ const updateTreeStatus = function (req) {
             newTask.start_time = new Date();
           } else if (type !== '2' && oldType === 2) {
             // 不应该出现这种情况
+            console.error('data error _id: ' + id);
           }
         }
-        // todo: 先查询task信息，判断是否开始
-        // 如果type = 2 (当前任务)
         _update({_id: id}, {$set: newTask}).then(raw => {
           if (raw.nModified > 0) {
             ret.code = 0;

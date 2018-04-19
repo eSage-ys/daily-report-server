@@ -20,12 +20,12 @@ const ObjectId = Schema.ObjectId;
  * title: 任务标题
  * detail: 任务详情
  * type: 任务类型 [0: 待办事项/1: 明日计划/2: 当前任务]
- * progress: 任务进度
+ // * progress: 任务进度
  * expect_cost: 预计耗时（h）
  * real_cost: 实际耗时（h）
  * daily_cost: 每日耗时（h）
  * priority: 任务优先级 默认5 越小优先级越高 最高为1
- * status: 任务状态 [0：进行中/1：完成/2：删除]
+ * status: 任务状态 [0: 未开始/1: 进行中/2: 完成/3: 删除]
  * hierarchies: 任务层级结构（根任务）[节点层级，默认1级，依次增加]
  * start_time: 任务开始时间
  * end_time: 任务结束时间
@@ -38,7 +38,7 @@ const taskSchema = new Schema({
     title: {type: String},
     detail: {type: String, default: ''},
     type: {type: Number, default: 0},
-    progress: {type: Number, default: 0, min: 0, max: 100},
+    // progress: {type: Number, default: 0, min: 0, max: 100},
     expect_cost: {type: Number},
     real_cost: {type: Number},
     daily_cost: {type: Object},
