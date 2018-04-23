@@ -18,8 +18,8 @@ const defaultOptions = {
   status: 0,
   hierarchies: 1,
   detail: '',
-  parent_id: '',
   real_cost: 0,
+  expect_cost: 0,
   daily_cost: {},
   date_format: 'yyyy-MM-hh',
   projection: {creator: 0, modifier: 0, modify_time: 0, __v: 0},
@@ -140,15 +140,14 @@ const addTask = function (req) {
   return new Promise(resolve => {
     let ret = {};
     let task = {};
+    let parent_id = req.param('parentId');
     task.user_id = req.param('userId') || '';
     task.title = req.param('title') || '';
-    // todo 预期耗时？？？
-    task.expect_cost = req.param('expectCost') || '';
-    if (!task.user_id || !task.title || !task.expect_cost) {
+    task.hierarchies = req.param('hierarchies') || defaultOptions.hierarchies;
+    if (!task.user_id || !task.title || !(!parent_id && task.hierarchies == 1 || parent_id && task.hierarchies > 1)) {
       resolve(defaultOptions.code2);
     } else {
       task._id = new mongoose.Types.ObjectId;
-      task.parent_id = req.param('parentId') || defaultOptions.parent_id;
       task.detail = req.param('detail') || defaultOptions.detail;
       task.type = req.param('type') || defaultOptions.type;
       // task.progress = req.param('progress') || defaultOptions.progress;
@@ -156,12 +155,15 @@ const addTask = function (req) {
       task.daily_cost = req.param('dailyCost') || defaultOptions.daily_cost;
       task.priority = req.param('priority') || defaultOptions.priority;
       task.status = req.param('status') || defaultOptions.status;
-      task.hierarchies = req.param('hierarchies') || defaultOptions.hierarchies;
+      task.expect_cost = req.param('expectCost') || defaultOptions.expect_cost;
       if (req.param('startTime')) {
         task.start_time = req.param('startTime');
       }
       if (req.param('endTime')) {
         task.end_time = req.param('endTime');
+      }
+      if (parent_id) {
+        task.parent_id = parent_id;
       }
       _save(task).then(doc => {
         console.log(doc);
@@ -177,7 +179,6 @@ const addTask = function (req) {
     }
   })
 };
-// todo 假删除
 const deleteById = function (req) {
   return new Promise(resolve => {
     let ret = {};
@@ -410,7 +411,6 @@ const findByUserId = function (req) {
         }
         let taskTree = [];
         let children = {};
-        // todo 数据处理不够严谨，要保证数据层级和父子关系对应
         docs.sort((a, b) => {
           return (b.hierarchies === a.hierarchies && b.create_time < a.create_time ) || (b.hierarchies - a.hierarchies);
         });

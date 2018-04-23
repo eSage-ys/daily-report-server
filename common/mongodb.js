@@ -33,7 +33,7 @@ const ObjectId = Schema.ObjectId;
 const taskSchema = new Schema({
     _id: {type: ObjectId},
     // children_id: [{type: ObjectId, ref: 'tasks' , default: ''}],
-    parent_id: {type: String, default: ''},
+    parent_id: {type: ObjectId, ref: 'task'},
     user_id: {type: ObjectId, ref: 'user'},
     title: {type: String},
     detail: {type: String, default: ''},
