@@ -341,7 +341,7 @@ const updateUser = function (req) {
 
 /* GET users listing. */
 
-router.get('/add', (req, res) => {
+router.post('/add', (req, res) => {
   addUser(req, defaultOptions.role_user).then(ret => {
     try {
       res.send(JSON.stringify(ret));
@@ -351,7 +351,7 @@ router.get('/add', (req, res) => {
   });
 });
 
-router.get('/addAdmin', (req, res) => {
+router.post('/addAdmin', (req, res) => {
   addUser(req, defaultOptions.role_admin).then(ret => {
     try {
       res.send(JSON.stringify(ret));
@@ -382,7 +382,7 @@ router.post('/deleteBatch', (req, res) => {
   })
 });
 
-router.get('/update', (req, res) => {
+router.post('/update', (req, res) => {
   updateUser(req).then(ret => {
     try {
       res.send(JSON.stringify(ret));
@@ -392,7 +392,7 @@ router.get('/update', (req, res) => {
   })
 });
 
-router.get('/check', (req, res) => {
+router.post('/check', (req, res) => {
   checkAccountAndPwd(req).then(ret => {
     try {
       res.send(JSON.stringify(ret));

@@ -142,6 +142,7 @@ const addTask = function (req) {
     let task = {};
     task.user_id = req.param('userId') || '';
     task.title = req.param('title') || '';
+    // todo 预期耗时？？？
     task.expect_cost = req.param('expectCost') || '';
     if (!task.user_id || !task.title || !task.expect_cost) {
       resolve(defaultOptions.code2);
@@ -409,6 +410,7 @@ const findByUserId = function (req) {
         }
         let taskTree = [];
         let children = {};
+        // todo 数据处理不够严谨，要保证数据层级和父子关系对应
         docs.sort((a, b) => {
           return (b.hierarchies === a.hierarchies && b.create_time < a.create_time ) || (b.hierarchies - a.hierarchies);
         });
@@ -447,8 +449,7 @@ router.get('/', (req, res) => {
 
 });
 
-// todo: post
-router.get('/add', (req, res) => {
+router.post('/add', (req, res) => {
   addTask(req).then(ret => {
     try {
       res.send(JSON.stringify(ret));
@@ -478,7 +479,7 @@ router.post('/deleteBatch', (req, res) => {
   })
 });
 // update  by id ***
-router.get('/update', (req, res) => {
+router.post('/update', (req, res) => {
   updateTask(req).then(ret => {
     try {
       res.send(JSON.stringify(ret));
@@ -488,8 +489,8 @@ router.get('/update', (req, res) => {
   })
 });
 // update parent
-router.get('/updateTreeStatus', (req, res) => {
-  updateTreeStatus.then(ret => {
+router.post('/updateTreeStatus', (req, res) => {
+  updateTreeStatus(req).then(ret => {
     try {
       res.send(JSON.stringify(ret));
     } catch (e) {
