@@ -30,9 +30,10 @@ const ObjectId = Schema.ObjectId;
  * start_time: 任务开始时间
  * end_time: 任务结束时间
  */
+// todo 额外加上 children: [] 修改task时，同时更新父任务
 const taskSchema = new Schema({
     _id: {type: ObjectId},
-    // children_id: [{type: ObjectId, ref: 'tasks' , default: ''}],
+    // children: [{type: ObjectId, ref: 'tasks' , default: ''}],
     parent_id: {type: ObjectId, ref: 'task'},
     user_id: {type: ObjectId, ref: 'user'},
     title: {type: String},

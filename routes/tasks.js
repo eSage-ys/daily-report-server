@@ -410,21 +410,21 @@ const findByUserId = function (req) {
           docs = [];
         }
         let taskTree = [];
-        let children = {};
+        let childNodes = {};
         docs.sort((a, b) => {
           return (b.hierarchies === a.hierarchies && b.create_time < a.create_time ) || (b.hierarchies - a.hierarchies);
         });
         docs.forEach( doc => {
-          doc.childNodes  = [];
-          if (children.hasOwnProperty(doc._id)) {
-            doc.childNodes = children[doc._id];
+          doc.children  = [];
+          if (childNodes.hasOwnProperty(doc._id)) {
+            doc.children = childNodes[doc._id];
           }
           if (!doc.parent_id && doc.hierarchies === 1) {
             taskTree.unshift(doc);
-          } else if (children.hasOwnProperty(doc.parent_id)) {
-            children[doc.parent_id].unshift(doc);
+          } else if (childNodes.hasOwnProperty(doc.parent_id)) {
+            childNodes[doc.parent_id].unshift(doc);
           } else if (doc.parent_id) {
-            children[doc.parent_id] = [doc];
+            childNodes[doc.parent_id] = [doc];
           } else {
             console.error('数据异常');
             console.error('_id: ' + doc._id);
